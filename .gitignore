@@ -183,3 +183,4 @@ cython_debug/
 downloaded_songs.txt
 .DS_Store
 /Music_Downloads
+src/config.py
