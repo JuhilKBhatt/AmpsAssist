@@ -3,3 +3,4 @@ rich
 ytmusicapi
 setuptools<70.0.0
 schedule
+mutagen
