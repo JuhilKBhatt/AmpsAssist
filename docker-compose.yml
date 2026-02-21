@@ -1,0 +1,10 @@
+# docker-compose.dev.yml
+services:
+  ampsassist:
+    build: .
+    container_name: ampsassist_runner
+    restart: unless-stopped
+    volumes:
+      - ./downloads:/app/downloads
+    environment:
+      - TZ=Australia/Sydney # Ensures your 30-minute scheduler runs on your local time
