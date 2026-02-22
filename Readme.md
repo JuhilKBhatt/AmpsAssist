@@ -38,7 +38,7 @@ Before running the container, you must set up the following three configuration 
 Create a `.env` file to securely store your NAS credentials and Plex API token. 
 *Note: `PLEX_M3U_PATH` must be the absolute path as your Plex Server sees it internally (e.g., `/data/music/Playlists`), not the Docker or SMB path.*
 
-`
+```
 env
 # SMB/NAS Credentials
 SMB_USERNAME=Your_SMB_Username
@@ -49,7 +49,7 @@ PLEX_URL=http://YOUR_PLEX_IP:32400
 PLEX_TOKEN=your_plex_token_here
 PLEX_LIBRARY=Music
 PLEX_M3U_PATH=/data/music/Playlists
-`
+```
 
 ### 2.** **`browser.json` (YouTube Music Authentication)
 
