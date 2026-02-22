@@ -39,7 +39,6 @@ Create a `.env` file to securely store your NAS credentials and Plex API token.
 *Note: `PLEX_M3U_PATH` must be the absolute path as your Plex Server sees it internally (e.g., `/data/music/Playlists`), not the Docker or SMB path.*
 
 ```
-env
 # SMB/NAS Credentials
 SMB_USERNAME=Your_SMB_Username
 SMB_PASSWORD=Your_SMB_Password
