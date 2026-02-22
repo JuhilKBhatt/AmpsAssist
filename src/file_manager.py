@@ -1,6 +1,6 @@
 # ./src/file_manager.py
 import os
-import shutil
+import glob
 from config import ALL_SONGS_DIR, PLAYLISTS_DIR
 
 def setup_directories():
@@ -8,17 +8,30 @@ def setup_directories():
     os.makedirs(ALL_SONGS_DIR, exist_ok=True)
     os.makedirs(PLAYLISTS_DIR, exist_ok=True)
 
-def copy_to_playlist_folder(file_path, playlist_name):
-    """Copies a downloaded track from the main folder to its playlist folder."""
-    # Clean the playlist name for safe folder creation
+def clear_old_playlists():
+    """Deletes old .m3u files before a fresh sync so mixes stay perfectly up-to-date."""
+    print("Clearing old playlist files...")
+    m3u_files = glob.glob(os.path.join(PLAYLISTS_DIR, "*.m3u"))
+    for f in m3u_files:
+        try:
+            os.remove(f)
+        except Exception as e:
+            print(f"Could not remove old playlist {f}: {e}")
+
+def add_to_m3u_playlist(file_path, playlist_name):
+    """Appends the song's relative path to an .m3u playlist file for Plex."""
+    # Clean the playlist name for safe file creation
     safe_playlist_name = "".join(x for x in playlist_name if x.isalnum() or x in " -_")
-    playlist_path = os.path.join(PLAYLISTS_DIR, safe_playlist_name)
-    os.makedirs(playlist_path, exist_ok=True)
+    m3u_path = os.path.join(PLAYLISTS_DIR, f"{safe_playlist_name}.m3u")
     
-    filename = os.path.basename(file_path)
-    dest_path = os.path.join(playlist_path, filename)
-    
-    # Copy if it doesn't already exist in the playlist folder
-    if not os.path.exists(dest_path):
-        shutil.copy2(file_path, dest_path)
-        print(f"Copied: {filename} -> {safe_playlist_name}/")
+    try:
+        # Create a relative path (e.g., "../All_Songs/Artist/Album/Song.mp3")
+        # This guarantees Plex can find the song regardless of how the SMB share is mapped.
+        rel_path = os.path.relpath(file_path, PLAYLISTS_DIR)
+        
+        # Append the song path to the .m3u file
+        with open(m3u_path, 'a', encoding='utf-8') as f:
+            f.write(f"{rel_path}\n")
+            
+    except Exception as e:
+        print(f"Failed to add to M3U: {e}")

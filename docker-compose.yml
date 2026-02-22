@@ -5,10 +5,16 @@ services:
     container_name: ampsassist_runner
     restart: unless-stopped
     volumes:
-      - ./downloads:/app/downloads
+      - plex_music:/app/downloads
       - ./browser.json:/app/browser.json
     environment:
-      - TZ=Australia/Sydney # Ensures your 30-minute scheduler runs on your local time
-      - YTM_CLIENT_ID=${YTM_CLIENT_ID}
-      - YTM_CLIENT_SECRET=${YTM_CLIENT_SECRET}
-      - PYTHONUNBUFFERED=1 # Ensures real-time logging in Docker
+      - TZ=Australia/Sydney
+      - PYTHONUNBUFFERED=1
+
+volumes:
+  plex_music:
+    driver: local
+    driver_opts:
+      type: cifs
+      device: "//192.168.1.230/music"
+      o: "username=${SMB_USERNAME},password=${SMB_PASSWORD},file_mode=0777,dir_mode=0777,vers=3.0"

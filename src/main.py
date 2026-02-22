@@ -1,13 +1,16 @@
 # ./src/main.py
 import time
 import schedule
-from file_manager import setup_directories
+from file_manager import setup_directories, clear_old_playlists
 from playlist_manager import get_playlist_tracks
 from downloader import process_downloads
 
 def sync_job():
     print("Starting AmpsAssist Sync Job...")
     setup_directories()
+    
+    # Wipe the old .m3u files so we get a fresh mix generated
+    clear_old_playlists()
     
     tracks = get_playlist_tracks()
     print(f"Found {len(tracks)} tracks across playlists. Processing...")

@@ -3,12 +3,12 @@ import os
 import yt_dlp
 from concurrent.futures import ThreadPoolExecutor
 from mutagen.mp3 import MP3
-from mutagen.id3 import ID3, TIT2, TPE1, TALB
+from mutagen.id3 import ID3, TIT2, TPE1, TALB, TPE2
 from config import ALL_SONGS_DIR, ARCHIVE_FILE, RATE_LIMIT_BYTES, NUM_WORKERS
-from file_manager import copy_to_playlist_folder
+from file_manager import add_to_m3u_playlist
 
 def apply_metadata(file_path, track):
-    """Forcefully embeds ytmusicapi metadata directly into the MP3 tags."""
+    """Forcefully embeds ytmusicapi metadata and Plex required tags directly into the MP3."""
     try:
         audio = MP3(file_path, ID3=ID3)
         try:
@@ -18,46 +18,57 @@ def apply_metadata(file_path, track):
         
         audio.tags.add(TIT2(encoding=3, text=track['title']))
         audio.tags.add(TPE1(encoding=3, text=track['artist']))
+        audio.tags.add(TPE2(encoding=3, text=track['artist'])) # Plex Album Artist
         audio.tags.add(TALB(encoding=3, text=track['album']))
         audio.save()
         print(f"Tagged: {track['artist']} - {track['title']}")
     except Exception as e:
         print(f"Failed to apply metadata to {file_path}: {e}")
 
+def get_safe_filename(name):
+    return "".join(x for x in name if x.isalnum() or x in " -_") or "Unknown"
+
 def find_existing_file(video_id):
-    """Searches All_Songs directory to see if we already downloaded this video."""
     if not os.path.exists(ALL_SONGS_DIR):
         return None
-    # We format files as "Title [ID].mp3", so we look for the ID at the end
     search_string = f"[{video_id}].mp3"
-    for filename in os.listdir(ALL_SONGS_DIR):
-        if filename.endswith(search_string):
-            return os.path.join(ALL_SONGS_DIR, filename)
+    
+    for root, dirs, files in os.walk(ALL_SONGS_DIR):
+        for filename in files:
+            if filename.endswith(search_string):
+                return os.path.join(root, filename)
     return None
 
 def download_track(track):
-    """Downloads a single track and routes it to the correct folder."""
+    """Downloads a single track and routes it to the correct Plex folder."""
     
-    # --- OFFLINE SYNC FIX: Check if we already have it! ---
     existing_file = find_existing_file(track['video_id'])
     if existing_file:
-        # We already downloaded it previously. Just sync it to the new playlist folder!
-        copy_to_playlist_folder(existing_file, track['playlist_name'])
+        # We already have the file! Just add its path to the M3U playlist.
+        add_to_m3u_playlist(existing_file, track['playlist_name'])
         return
 
-    # If it's totally new, trigger the download:
     video_url = f"https://www.youtube.com/watch?v={track['video_id']}"
+    
+    safe_artist = get_safe_filename(track['artist'])
+    safe_album = get_safe_filename(track['album'])
+    safe_title = get_safe_filename(track['title'])
+    
+    plex_dir = os.path.join(ALL_SONGS_DIR, safe_artist, safe_album)
+    os.makedirs(plex_dir, exist_ok=True)
+    
+    out_path = os.path.join(plex_dir, f"{safe_title} [{track['video_id']}].%(ext)s")
     
     ydl_opts = {
         'format': 'bestaudio/best',
-        'outtmpl': os.path.join(ALL_SONGS_DIR, '%(title)s [%(id)s].%(ext)s'),
+        'outtmpl': out_path,
         'download_archive': ARCHIVE_FILE,
         'ratelimit': RATE_LIMIT_BYTES,
-        'postprocessors': [{
-            'key': 'FFmpegExtractAudio',
-            'preferredcodec': 'mp3',
-            'preferredquality': '192',
-        }],
+        'writethumbnail': True,
+        'postprocessors': [
+            {'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3', 'preferredquality': '192'},
+            {'key': 'EmbedThumbnail'}
+        ],
         'quiet': True,
         'no_warnings': True,
     }
@@ -73,11 +84,11 @@ def download_track(track):
                 
                 if os.path.exists(final_filename):
                     apply_metadata(final_filename, track)
-                    copy_to_playlist_folder(final_filename, track['playlist_name'])
+                    # Add the brand new file to the M3U playlist!
+                    add_to_m3u_playlist(final_filename, track['playlist_name'])
     except Exception as e:
         print(f"Failed to process {track['title']}: {e}")
 
 def process_downloads(tracks):
-    """Manages the download queue using workers."""
     with ThreadPoolExecutor(max_workers=NUM_WORKERS) as executor:
         executor.map(download_track, tracks)
