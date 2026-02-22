@@ -16,7 +16,6 @@ def apply_metadata(file_path, track):
         except Exception:
             pass # Tags already exist
         
-        # Inject standard MP3 metadata
         audio.tags.add(TIT2(encoding=3, text=track['title']))
         audio.tags.add(TPE1(encoding=3, text=track['artist']))
         audio.tags.add(TALB(encoding=3, text=track['album']))
@@ -25,8 +24,28 @@ def apply_metadata(file_path, track):
     except Exception as e:
         print(f"Failed to apply metadata to {file_path}: {e}")
 
+def find_existing_file(video_id):
+    """Searches All_Songs directory to see if we already downloaded this video."""
+    if not os.path.exists(ALL_SONGS_DIR):
+        return None
+    # We format files as "Title [ID].mp3", so we look for the ID at the end
+    search_string = f"[{video_id}].mp3"
+    for filename in os.listdir(ALL_SONGS_DIR):
+        if filename.endswith(search_string):
+            return os.path.join(ALL_SONGS_DIR, filename)
+    return None
+
 def download_track(track):
     """Downloads a single track and routes it to the correct folder."""
+    
+    # --- OFFLINE SYNC FIX: Check if we already have it! ---
+    existing_file = find_existing_file(track['video_id'])
+    if existing_file:
+        # We already downloaded it previously. Just sync it to the new playlist folder!
+        copy_to_playlist_folder(existing_file, track['playlist_name'])
+        return
+
+    # If it's totally new, trigger the download:
     video_url = f"https://www.youtube.com/watch?v={track['video_id']}"
     
     ydl_opts = {
@@ -45,19 +64,15 @@ def download_track(track):
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            # extract_info runs the download if it's not in the archive
             info = ydl.extract_info(video_url, download=True)
             
             if info:
-                # Resolve the final filename (.mp3)
                 expected_filename = ydl.prepare_filename(info)
                 base, _ = os.path.splitext(expected_filename)
                 final_filename = base + ".mp3"
                 
                 if os.path.exists(final_filename):
-                    # Step 1: Apply YTMusic API Metadata
                     apply_metadata(final_filename, track)
-                    # Step 2: Copy to Playlist directory
                     copy_to_playlist_folder(final_filename, track['playlist_name'])
     except Exception as e:
         print(f"Failed to process {track['title']}: {e}")
