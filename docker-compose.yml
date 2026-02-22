@@ -6,7 +6,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./downloads:/app/downloads
-      - ./oauth.json:/app/oauth.json
+      - ./browser.json:/app/browser.json
     environment:
       - TZ=Australia/Sydney # Ensures your 30-minute scheduler runs on your local time
       - YTM_CLIENT_ID=${YTM_CLIENT_ID}

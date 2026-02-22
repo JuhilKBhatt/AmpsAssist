@@ -185,3 +185,4 @@ downloaded_songs.txt
 /Music_Downloads
 src/config.py
 oauth.json
+browser.json

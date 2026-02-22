@@ -26,3 +26,7 @@ ALL_SONGS_DIR = os.path.join(BASE_DIR, "All_Songs")
 PLAYLISTS_DIR = os.path.join(BASE_DIR, "Playlists")
 ARCHIVE_FILE = os.path.join(BASE_DIR, "downloaded_archive.txt")
 ```
+
+
+
+docker run -it --rm -v $(pwd):/app -w /app python:3.12-slim bash -c "pip install ytmusicapi && ytmusicapi oauth"
