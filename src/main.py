@@ -4,6 +4,7 @@ import schedule
 from file_manager import setup_directories, clear_old_playlists
 from playlist_manager import get_playlist_tracks
 from downloader import process_downloads
+from plex_sync import sync_to_plex
 
 def sync_job():
     print("Starting AmpsAssist Sync Job...")
@@ -15,7 +16,12 @@ def sync_job():
     tracks = get_playlist_tracks()
     print(f"Found {len(tracks)} tracks across playlists. Processing...")
     
+    # Download the tracks and generate the .m3u files
     process_downloads(tracks)
+    
+    # Talk to Plex to update the live playlists!
+    sync_to_plex()
+    
     print("AmpsAssist Sync Complete. Waiting for next interval...\n")
 
 if __name__ == "__main__":

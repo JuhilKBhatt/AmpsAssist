@@ -4,6 +4,8 @@ services:
     build: .
     container_name: ampsassist_runner
     restart: unless-stopped
+    env_file:
+      - .env
     volumes:
       - plex_music:/app/downloads
       - ./browser.json:/app/browser.json

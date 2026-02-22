@@ -19,19 +19,16 @@ def clear_old_playlists():
             print(f"Could not remove old playlist {f}: {e}")
 
 def add_to_m3u_playlist(file_path, playlist_name):
-    """Appends the song's relative path to an .m3u playlist file for Plex."""
-    # Clean the playlist name for safe file creation
+    """Appends the song's absolute Plex path to an .m3u playlist file."""
     safe_playlist_name = "".join(x for x in playlist_name if x.isalnum() or x in " -_")
     m3u_path = os.path.join(PLAYLISTS_DIR, f"{safe_playlist_name}.m3u")
     
     try:
-        # Create a relative path (e.g., "../All_Songs/Artist/Album/Song.mp3")
-        # This guarantees Plex can find the song regardless of how the SMB share is mapped.
-        rel_path = os.path.relpath(file_path, PLAYLISTS_DIR)
+        plex_absolute_path = file_path.replace("/app/downloads", "/data/music")
         
-        # Append the song path to the .m3u file
+        # Append the absolute path to the .m3u file
         with open(m3u_path, 'a', encoding='utf-8') as f:
-            f.write(f"{rel_path}\n")
+            f.write(f"{plex_absolute_path}\n")
             
     except Exception as e:
         print(f"Failed to add to M3U: {e}")
