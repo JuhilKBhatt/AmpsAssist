@@ -1,7 +1,7 @@
 # ./src/file_manager.py
 import os
 import glob
-from config import ALL_SONGS_DIR, PLAYLISTS_DIR
+from config import ALL_SONGS_DIR, PLAYLISTS_DIR, DELETE_ORPHANED_SONGS
 
 def setup_directories():
     """Ensure base directories exist."""
@@ -32,3 +32,52 @@ def add_to_m3u_playlist(file_path, playlist_name):
             
     except Exception as e:
         print(f"Failed to add to M3U: {e}")
+
+def remove_orphaned_songs():
+    """Scans for and deletes MP3s that are no longer in any active playlist."""
+    if not DELETE_ORPHANED_SONGS:
+        return
+
+    print("\nScanning for orphaned songs to free up storage...")
+    
+    # 1. Gather all 'in-use' songs from the current M3U files
+    in_use_local_paths = set()
+    m3u_files = glob.glob(os.path.join(PLAYLISTS_DIR, "*.m3u"))
+    
+    for m3u in m3u_files:
+        try:
+            with open(m3u, 'r', encoding='utf-8') as f:
+                for line in f:
+                    plex_path = line.strip()
+                    if plex_path:
+                        # Convert Plex paths back to local Docker paths for comparison
+                        local_path = plex_path.replace("/data/music", "/app/downloads")
+                        in_use_local_paths.add(local_path)
+        except Exception as e:
+            print(f"Error reading {m3u}: {e}")
+
+    # 2. Walk through All_Songs and delete anything not in use
+    deleted_count = 0
+    for root, dirs, files in os.walk(ALL_SONGS_DIR):
+        for filename in files:
+            if filename.endswith(".mp3"):
+                file_path = os.path.join(root, filename)
+                if file_path not in in_use_local_paths:
+                    try:
+                        os.remove(file_path)
+                        print(f" -> Deleted orphaned song: {filename}")
+                        deleted_count += 1
+                    except Exception as e:
+                        print(f"Failed to delete {filename}: {e}")
+
+    # 3. Clean up empty Artist/Album directories
+    for root, dirs, files in os.walk(ALL_SONGS_DIR, topdown=False):
+        for dir_name in dirs:
+            dir_path = os.path.join(root, dir_name)
+            if not os.listdir(dir_path): # If folder is empty
+                try:
+                    os.rmdir(dir_path)
+                except Exception:
+                    pass
+    
+    print(f"Storage cleanup complete. Removed {deleted_count} unused tracks.")

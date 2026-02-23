@@ -1,7 +1,7 @@
 # ./src/main.py
 import time
 import schedule
-from file_manager import setup_directories, clear_old_playlists
+from file_manager import setup_directories, clear_old_playlists, remove_orphaned_songs
 from playlist_manager import get_playlist_tracks
 from downloader import process_downloads
 from plex_sync import sync_to_plex
@@ -18,6 +18,9 @@ def sync_job():
     
     # Download the tracks and generate the .m3u files
     process_downloads(tracks)
+    
+    # Clean up any MP3s that fell off the playlists to save storage
+    remove_orphaned_songs()
     
     # Talk to Plex to update the live playlists!
     sync_to_plex()
