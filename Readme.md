@@ -1,6 +1,6 @@
 # Amps Assist
 
-**Description:** Plex Amps Music Download Assistant. 
+**Description:** Plex Amps Music Download Assistant.
 
 Amps Assist is a fully automated, Dockerized Python application that seamlessly bridges YouTube Music and your Plex Media Server. It automatically scrapes your personalized YouTube Music mixes, custom playlists, and library, downloads the highest-quality audio, formats the metadata and folder structure specifically for Plexamp, generates `.m3u` playlists, and uses the Plex API to instantly inject them into your live server.
 
@@ -50,13 +50,13 @@ PLEX_LIBRARY=Music
 PLEX_M3U_PATH=/data/music/Playlists
 ```
 
-### 2.** **`browser.json` (YouTube Music Authentication)
+### 2. `browser.json` (YouTube Music Authentication)
 
-Export your authenticated YouTube Music session headers to a file named** **`browser.json`. This allows the** **`ytmusicapi` to read your private, personalized shelves (like "My Supermix").
+Export your authenticated YouTube Music session headers to a file named **`browser.json`. This allows the** `ytmusicapi` to read your private, personalized shelves (like "My Supermix").
 
-### 3.** **`src/config.py`
+### 3. `src/config.py`
 
-Open** **`src/config.py` to customize your download parameters:
+Open `src/config.py` to customize your download parameters:
 
 * `PLAYLIST_IDS`: Add specific YouTube or YouTube Music playlist URLs you want to hard-sync.
 * `MAX_SONGS_PER_PLAYLIST`: Limit the number of tracks pulled per mix (Default: 25).
@@ -66,9 +66,9 @@ Open** **`src/config.py` to customize your download parameters:
 
 ## 🚀 How to Run
 
-Because the application uses an SMB volume mount, make sure your host machine supports** **`cifs` (Linux users may need to run** **`sudo apt-get install cifs-utils`).
+Because the application uses an SMB volume mount, make sure your host machine supports **`cifs` (Linux users may need to run** `sudo apt-get install cifs-utils`).
 
-1. **Build and Start the Container:** Run the following command in the root directory (where your** **`docker-compose.yml`is located):
+1. **Build and Start the Container:** Run the following command in the root directory (where your `docker-compose.yml`is located):
    **Bash**
 
    ```
@@ -91,9 +91,9 @@ Because the application uses an SMB volume mount, make sure your host machine su
 
 ## 🧠 How it Works Under the Hood
 
-1. **Init:** The container mounts your SMB share to** **`/app/downloads` securely using your** **`.env` variables.
+1. **Init:** The container mounts your SMB share to **`/app/downloads` securely using your**`.env` variables.
 2. **Scan:** The script authenticates with YouTube Music, scrolls your home feed, and memorizes the dynamic titles of your auto-generated mixes.
-3. **Sync:** It cross-references your existing** **`.mp3` files. Missing tracks are downloaded via** **`yt-dlp` and tagged. Existing tracks are instantly skipped.
-4. **Build:** Old** **`.m3u` files are wiped, and fresh ones are generated using Plex's absolute directory paths.
-5. **Push:** The script contacts your Plex API, triggers a library scan, waits 60 seconds, deletes your outdated Plex playlists, and natively uploads the new** **`.m3u` files.
+3. **Sync:** It cross-references your existing **`.mp3` files. Missing tracks are downloaded via** `yt-dlp` and tagged. Existing tracks are instantly skipped.
+4. **Build:** Old`.m3u` files are wiped, and fresh ones are generated using Plex's absolute directory paths.
+5. **Push:** The script contacts your Plex API, triggers a library scan, waits 60 seconds, deletes your outdated Plex playlists, and natively uploads the new `.m3u` files.
 6. **Sleep:** The container waits 30 minutes and does it all again.
