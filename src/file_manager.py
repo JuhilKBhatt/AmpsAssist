@@ -1,6 +1,7 @@
 # ./src/file_manager.py
 import os
 import glob
+import shutil
 from config import ALL_SONGS_DIR, PLAYLISTS_DIR, DELETE_ORPHANED_SONGS
 
 def setup_directories():
@@ -70,13 +71,23 @@ def remove_orphaned_songs():
                     except Exception as e:
                         print(f"Failed to delete {filename}: {e}")
 
-    # 3. Clean up empty Artist/Album directories
+    # 3. Aggressive folder cleanup (wipes ghost albums and leftover cover art)
     for root, dirs, files in os.walk(ALL_SONGS_DIR, topdown=False):
         for dir_name in dirs:
             dir_path = os.path.join(root, dir_name)
-            if not os.listdir(dir_path): # If folder is empty
+            
+            # Check if there are any mp3 files in this directory or its subdirectories
+            has_mp3 = False
+            for r, d, f in os.walk(dir_path):
+                if any(file.endswith(".mp3") for file in f):
+                    has_mp3 = True
+                    break
+            
+            # If no MP3s exist, forcefully delete the entire folder and any leftover thumbnails
+            if not has_mp3:
                 try:
-                    os.rmdir(dir_path)
+                    shutil.rmtree(dir_path)
+                    print(f" -> Removed empty/ghost folder: {dir_name}")
                 except Exception:
                     pass
     

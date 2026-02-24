@@ -86,17 +86,17 @@ def sync_to_plex():
         print("Fetching existing Plex playlists...")
         existing_playlists = get_existing_playlists()
 
+        # 1. STRICT MIRRORING: Delete ALL existing playlists in Plex to remove abandoned mixes
+        for pl_title, rating_key in existing_playlists.items():
+            print(f" -> Deleting old Plex playlist: '{pl_title}'")
+            delete_playlist(rating_key)
+
+        # 2. Upload only the fresh, active M3U files
         m3u_files = glob.glob(os.path.join(PLAYLISTS_DIR, "*.m3u"))
         for m3u_file in m3u_files:
             m3u_name = os.path.basename(m3u_file)
             playlist_title = os.path.splitext(m3u_name)[0]
 
-            # 1. Delete the old version of the playlist in Plex
-            if playlist_title in existing_playlists:
-                print(f" -> Deleting old Plex playlist: '{playlist_title}'")
-                delete_playlist(existing_playlists[playlist_title])
-
-            # 2. Feed the newly generated M3U file to Plex
             print(f" -> Uploading new M3U to Plex: '{playlist_title}'")
             success = upload_m3u(section_id, m3u_name)
             if success:
