@@ -34,15 +34,24 @@ def add_to_m3u_playlist(file_path, playlist_name):
     except Exception as e:
         print(f"Failed to add to M3U: {e}")
 
-def remove_orphaned_songs():
-    """Scans for and deletes MP3s that are no longer in any active playlist."""
+def remove_orphaned_songs(protected_plex_paths=None):
     if not DELETE_ORPHANED_SONGS:
         return
+
+    if protected_plex_paths is None:
+        protected_plex_paths = []
 
     print("\nScanning for orphaned songs to free up storage...")
     
     # 1. Gather all 'in-use' songs from the current M3U files
     in_use_local_paths = set()
+
+    # 1. Protect the saved files from Plex
+    for plex_path in protected_plex_paths:
+        local_path = plex_path.replace("/data/music", "/app/downloads")
+        in_use_local_paths.add(local_path)
+
+    # 2. Protect the current active M3U files
     m3u_files = glob.glob(os.path.join(PLAYLISTS_DIR, "*.m3u"))
     
     for m3u in m3u_files:
@@ -57,7 +66,7 @@ def remove_orphaned_songs():
         except Exception as e:
             print(f"Error reading {m3u}: {e}")
 
-    # 2. Walk through All_Songs and delete anything not in use
+    # 3. Walk through All_Songs and delete anything not in use
     deleted_count = 0
     for root, dirs, files in os.walk(ALL_SONGS_DIR):
         for filename in files:
@@ -71,7 +80,7 @@ def remove_orphaned_songs():
                     except Exception as e:
                         print(f"Failed to delete {filename}: {e}")
 
-    # 3. Aggressive folder cleanup (wipes ghost albums and leftover cover art)
+    # 4. Aggressive folder cleanup
     for root, dirs, files in os.walk(ALL_SONGS_DIR, topdown=False):
         for dir_name in dirs:
             dir_path = os.path.join(root, dir_name)

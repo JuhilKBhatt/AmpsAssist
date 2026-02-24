@@ -12,8 +12,9 @@ Amps Assist is a fully automated, Dockerized Python application that seamlessly 
 * **Native Plex Structure:** Automatically sorts downloads into a clean `All_Songs/Artist/Album/Song.mp3` directory format.
 * **Smart Playlist Generation:** Builds lightweight `.m3u` playlist files using absolute paths specifically mapped for Plex's internal database.
 * **Direct Plex API Integration:** Bypasses standard Plex library scans to instantly delete old playlists and upload fresh `.m3u` files directly into the Plex database.
+* **🛡️ Playlist Freezing :** Type "save" into the description of any Plex playlist to permanently protect it from being overwritten or deleted.
+* **💾 Smart Storage Management:** Automatically detects and deletes orphaned `.mp3` files and empty ghost folders that are no longer part of any active mix or saved playlist.
 * **Set-and-Forget:** Runs continuously in the background on a 30-minute schedule loop.
-
 ---
 
 ## 📋 Prerequisites

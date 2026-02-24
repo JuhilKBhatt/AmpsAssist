@@ -4,7 +4,7 @@ import schedule
 from file_manager import setup_directories, clear_old_playlists, remove_orphaned_songs
 from playlist_manager import get_playlist_tracks
 from downloader import process_downloads
-from plex_sync import sync_to_plex
+from plex_sync import get_protected_plex_data, sync_to_plex
 
 def sync_job():
     print("Starting AmpsAssist Sync Job...")
@@ -19,11 +19,17 @@ def sync_job():
     # Download the tracks and generate the .m3u files
     process_downloads(tracks)
     
-    # Clean up any MP3s that fell off the playlists to save storage
-    remove_orphaned_songs()
+    # Check Plex for playlists you manually marked with "save"
+    protected_data = get_protected_plex_data()
+    protected_paths = []
+    for pl_info in protected_data.values():
+        protected_paths.extend(pl_info.get("paths", []))
     
-    # Talk to Plex to update the live playlists!
-    sync_to_plex()
+    # Clean up (pass the protected paths so they survive!)
+    remove_orphaned_songs(protected_paths)
+    
+    # Talk to Plex to update the live playlists
+    sync_to_plex(protected_data)
     
     print("AmpsAssist Sync Complete. Waiting for next interval...\n")
 
