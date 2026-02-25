@@ -4,7 +4,7 @@ import yt_dlp
 from concurrent.futures import ThreadPoolExecutor
 from mutagen.mp3 import MP3
 from mutagen.id3 import ID3, TIT2, TPE1, TALB, TPE2
-from config import ALL_SONGS_DIR, ARCHIVE_FILE, RATE_LIMIT_BYTES, NUM_WORKERS
+from config import ALL_SONGS_DIR, RATE_LIMIT_BYTES, NUM_WORKERS
 from file_manager import add_to_m3u_playlist
 
 def apply_metadata(file_path, track):
@@ -26,7 +26,7 @@ def apply_metadata(file_path, track):
         print(f"Failed to apply metadata to {file_path}: {e}")
 
 def get_safe_filename(name):
-    return "".join(x for x in name if x.isalnum() or x in " -_") or "Unknown"
+    return "".join(x for x in str(name) if x.isalnum() or x in " -_") or "Unknown"
 
 def find_existing_file(video_id):
     if not os.path.exists(ALL_SONGS_DIR):
@@ -42,6 +42,11 @@ def find_existing_file(video_id):
 def download_track(track):
     """Downloads a single track and routes it to the correct Plex folder."""
     
+    # Skip invalid tracks (like local YTM uploads that have no YouTube ID)
+    if not track.get('video_id'):
+        print(f"Skipped {track.get('title')}: No YouTube ID (likely a local upload or region blocked).")
+        return
+        
     existing_file = find_existing_file(track['video_id'])
     if existing_file:
         # We already have the file! Just add its path to the M3U playlist.
@@ -62,7 +67,6 @@ def download_track(track):
     ydl_opts = {
         'format': 'bestaudio/best',
         'outtmpl': out_path,
-        'download_archive': ARCHIVE_FILE,
         'ratelimit': RATE_LIMIT_BYTES,
         'writethumbnail': True,
         'postprocessors': [
