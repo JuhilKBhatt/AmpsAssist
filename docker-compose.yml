@@ -19,4 +19,4 @@ volumes:
     driver_opts:
       type: cifs
       device: "//192.168.1.230/music"
-      o: "username=${SMB_USERNAME},password=${SMB_PASSWORD},file_mode=0777,dir_mode=0777,vers=3.0"
+      o: "username=${SMB_USERNAME},password=${SMB_PASSWORD},file_mode=0777,dir_mode=0777,vers=3.0,iocharset=utf8"

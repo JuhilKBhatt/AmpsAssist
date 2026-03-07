@@ -4,6 +4,10 @@ import glob
 import shutil
 from config import ALL_SONGS_DIR, PLAYLISTS_DIR, DELETE_ORPHANED_SONGS
 
+# Path constants for Docker environment
+DOCKER_DOWNLOADS_PATH = "/app/downloads"
+PLEX_MUSIC_PATH = "/media/music"
+
 def setup_directories():
     """Ensure base directories exist."""
     os.makedirs(ALL_SONGS_DIR, exist_ok=True)
@@ -25,7 +29,7 @@ def add_to_m3u_playlist(file_path, playlist_name):
     m3u_path = os.path.join(PLAYLISTS_DIR, f"{safe_playlist_name}.m3u")
     
     try:
-        plex_absolute_path = file_path.replace("/app/downloads", "/data/music")
+        plex_absolute_path = file_path.replace(DOCKER_DOWNLOADS_PATH, PLEX_MUSIC_PATH)
         
         # Append the absolute path to the .m3u file
         with open(m3u_path, 'a', encoding='utf-8') as f:
@@ -48,7 +52,7 @@ def remove_orphaned_songs(protected_plex_paths=None):
 
     # 1. Protect the saved files from Plex
     for plex_path in protected_plex_paths:
-        local_path = plex_path.replace("/data/music", "/app/downloads")
+        local_path = plex_path.replace(PLEX_MUSIC_PATH, DOCKER_DOWNLOADS_PATH)
         in_use_local_paths.add(local_path)
 
     # 2. Protect the current active M3U files
@@ -61,7 +65,7 @@ def remove_orphaned_songs(protected_plex_paths=None):
                     plex_path = line.strip()
                     if plex_path:
                         # Convert Plex paths back to local Docker paths for comparison
-                        local_path = plex_path.replace("/data/music", "/app/downloads")
+                        local_path = plex_path.replace(PLEX_MUSIC_PATH, DOCKER_DOWNLOADS_PATH)
                         in_use_local_paths.add(local_path)
         except Exception as e:
             print(f"Error reading {m3u}: {e}")
