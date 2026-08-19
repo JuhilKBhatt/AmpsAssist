@@ -1,0 +1,14 @@
+{
+ "title": "Amps Assist",
+ "description": " A python application that searches your YouTube Music to download and update your music library with the latest songs and albums from your favorite artists.",
+ "language": ["Python"],
+ "liveDemo": "",
+ "images": [
+   ""
+ ],
+ "videoDemo": "",
+ "Priority": 1,
+ "type": "Solo",
+ "version": "Alpha",
+ "Visibilty": true
+}
