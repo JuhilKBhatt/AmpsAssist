@@ -4,7 +4,7 @@ from file_manager import setup_directories, clear_old_playlists, remove_orphaned
 from playlist_manager import get_playlist_tracks
 from downloader import process_downloads, console
 from jellyfin_sync import sync_to_jellyfin
-from plex_sync import sync_to_plex
+from plex_sync import sync_to_plex, get_protected_plex_data
 
 import yt_dlp
 
@@ -23,7 +23,11 @@ def sync_job():
     # Download the tracks and generate the .m3u files
     process_downloads(tracks)
     
+    # Check Plex for playlists manually marked with "save"
+    protected_data = get_protected_plex_data()
     protected_paths = []
+    for pl_info in protected_data.values():
+        protected_paths.extend(pl_info.get("paths", []))
     
     # Clean up (pass the protected paths so they survive!)
     console.print("\n[yellow]Removing orphaned songs...[/yellow]")
@@ -32,7 +36,7 @@ def sync_job():
     # Talk to Media Servers to trigger a library scan
     console.print("\n[cyan]Triggering Library Scans...[/cyan]")
     sync_to_jellyfin()
-    sync_to_plex()
+    sync_to_plex(protected_data)
     
     console.rule("[bold green]Sync Complete! Waiting for next interval...")
 

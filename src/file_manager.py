@@ -25,24 +25,27 @@ def clear_old_playlists():
             print(f"Could not remove old playlist {f}: {e}")
 
 def add_to_m3u_playlist(file_path, playlist_name):
-    """Appends the song's absolute path to .m3u playlist files for both Plex and Jellyfin."""
+    """Appends the song's absolute path to .m3u playlist files."""
     safe_playlist_name = "".join(x for x in playlist_name if x.isalnum() or x in " -_")
     
-    # We create two M3U files if the internal mount paths differ, otherwise one is fine.
-    # For simplicity, we explicitly create a Jellyfin version and a Plex version.
-    
-    jellyfin_m3u_path = os.path.join(PLAYLISTS_DIR, f"{safe_playlist_name}_jellyfin.m3u")
-    plex_m3u_path = os.path.join(PLAYLISTS_DIR, f"{safe_playlist_name}_plex.m3u")
+    jellyfin_absolute_path = file_path.replace(DOCKER_DOWNLOADS_PATH, JELLYFIN_MUSIC_PATH)
+    plex_absolute_path = file_path.replace(DOCKER_DOWNLOADS_PATH, PLEX_MUSIC_PATH)
     
     try:
-        jellyfin_absolute_path = file_path.replace(DOCKER_DOWNLOADS_PATH, JELLYFIN_MUSIC_PATH)
-        plex_absolute_path = file_path.replace(DOCKER_DOWNLOADS_PATH, PLEX_MUSIC_PATH)
-        
-        with open(jellyfin_m3u_path, 'a', encoding='utf-8') as f:
-            f.write(f"{jellyfin_absolute_path}\n")
+        # If both systems use the same internal mount path, we only need ONE file!
+        if JELLYFIN_MUSIC_PATH == PLEX_MUSIC_PATH:
+            single_m3u_path = os.path.join(PLAYLISTS_DIR, f"{safe_playlist_name}.m3u")
+            with open(single_m3u_path, 'a', encoding='utf-8') as f:
+                f.write(f"{jellyfin_absolute_path}\n")
+        else:
+            jellyfin_m3u_path = os.path.join(PLAYLISTS_DIR, f"{safe_playlist_name}_jellyfin.m3u")
+            plex_m3u_path = os.path.join(PLAYLISTS_DIR, f"{safe_playlist_name}_plex.m3u")
             
-        with open(plex_m3u_path, 'a', encoding='utf-8') as f:
-            f.write(f"{plex_absolute_path}\n")
+            with open(jellyfin_m3u_path, 'a', encoding='utf-8') as f:
+                f.write(f"{jellyfin_absolute_path}\n")
+                
+            with open(plex_m3u_path, 'a', encoding='utf-8') as f:
+                f.write(f"{plex_absolute_path}\n")
             
     except Exception as e:
         print(f"Failed to add to M3U: {e}")
@@ -72,7 +75,8 @@ def remove_orphaned_songs(protected_jellyfin_paths=None):
                 for line in f:
                     media_path = line.strip()
                     if media_path:
-                        # Convert both Plex and Jellyfin paths back to local Docker paths
+                        # Since JELLYFIN_MUSIC_PATH and PLEX_MUSIC_PATH are the same, 
+                        # replacing either will work. If they differ, check suffix.
                         if "_plex" in m3u:
                             local_path = media_path.replace(PLEX_MUSIC_PATH, DOCKER_DOWNLOADS_PATH)
                         else:
