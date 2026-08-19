@@ -79,12 +79,21 @@ def get_auto_feed_playlists():
         for shelf in home_shelves:
             title = shelf.get('title', '').lower()
             
-            if 'mixed for you' in title or 'from the community' in title:
+            if 'mixed for you' in title:
+                for item in shelf.get('contents', []):
+                    pid = item.get('playlistId', '')
+                    mix_title = item.get('title', 'Unknown Mix')
+                    # Only download the specific mixes the user requested
+                    if mix_title.lower() in ['my supermix', 'my mix 1']:
+                        if pid and pid not in auto_playlists:
+                            auto_playlists[pid] = mix_title
+                            console.print(f" [green]✓ Found:[/green] {mix_title}")
+                            
+            elif 'from the community' in title:
                 count = 0
                 for item in shelf.get('contents', []):
                     pid = item.get('playlistId', '')
                     if pid and pid not in auto_playlists:
-                        # Memorize the actual title from the home screen
                         mix_title = item.get('title', 'Unknown Mix')
                         auto_playlists[pid] = mix_title
                         console.print(f" [green]✓ Found:[/green] {mix_title}")
