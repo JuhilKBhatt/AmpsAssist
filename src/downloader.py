@@ -8,7 +8,7 @@ from config import ALL_SONGS_DIR, RATE_LIMIT_BYTES, NUM_WORKERS
 from file_manager import add_to_m3u_playlist
 
 def apply_metadata(file_path, track):
-    """Forcefully embeds ytmusicapi metadata and Plex required tags directly into the MP3."""
+    """Forcefully embeds ytmusicapi metadata and Jellyfin required tags directly into the MP3."""
     try:
         audio = MP3(file_path, ID3=ID3)
         try:
@@ -18,7 +18,7 @@ def apply_metadata(file_path, track):
         
         audio.tags.add(TIT2(encoding=3, text=track['title']))
         audio.tags.add(TPE1(encoding=3, text=track['artist']))
-        audio.tags.add(TPE2(encoding=3, text=track['artist'])) # Plex Album Artist
+        audio.tags.add(TPE2(encoding=3, text=track['artist'])) # Jellyfin Album Artist
         audio.tags.add(TALB(encoding=3, text=track['album']))
         audio.save()
         print(f"Tagged: {track['artist']} - {track['title']}")
@@ -40,7 +40,7 @@ def find_existing_file(video_id):
     return None
 
 def download_track(track):
-    """Downloads a single track and routes it to the correct Plex folder."""
+    """Downloads a single track and routes it to the correct Jellyfin folder."""
     
     # Skip invalid tracks (like local YTM uploads that have no YouTube ID)
     if not track.get('video_id'):

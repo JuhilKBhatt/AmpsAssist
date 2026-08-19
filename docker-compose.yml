@@ -7,14 +7,14 @@ services:
     env_file:
       - .env
     volumes:
-      - plex_music:/app/downloads
+      - jellyfin_music:/app/downloads
       - ./browser.json:/app/browser.json
     environment:
       - TZ=Australia/Sydney
       - PYTHONUNBUFFERED=1
 
 volumes:
-  plex_music:
+  jellyfin_music:
     driver: local
     driver_opts:
       type: cifs
