@@ -4,6 +4,7 @@ from file_manager import setup_directories, clear_old_playlists, remove_orphaned
 from playlist_manager import get_playlist_tracks
 from downloader import process_downloads, console
 from jellyfin_sync import sync_to_jellyfin
+from plex_sync import sync_to_plex
 
 import yt_dlp
 
@@ -22,17 +23,16 @@ def sync_job():
     # Download the tracks and generate the .m3u files
     process_downloads(tracks)
     
-    # Note: Jellyfin doesn't support the 'save' description feature like Plex.
-    # To protect files, you could add logic to read specific M3Us.
     protected_paths = []
     
     # Clean up (pass the protected paths so they survive!)
     console.print("\n[yellow]Removing orphaned songs...[/yellow]")
     remove_orphaned_songs(protected_paths)
     
-    # Talk to Jellyfin to trigger a library scan
-    console.print("[cyan]Triggering Jellyfin Library Scan...[/cyan]")
+    # Talk to Media Servers to trigger a library scan
+    console.print("\n[cyan]Triggering Library Scans...[/cyan]")
     sync_to_jellyfin()
+    sync_to_plex()
     
     console.rule("[bold green]Sync Complete! Waiting for next interval...")
 

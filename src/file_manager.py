@@ -6,7 +6,8 @@ from config import ALL_SONGS_DIR, PLAYLISTS_DIR, DELETE_ORPHANED_SONGS
 
 # Path constants for Docker environment
 DOCKER_DOWNLOADS_PATH = "/app/downloads"
-JELLYFIN_MUSIC_PATH = "/media/music"
+JELLYFIN_MUSIC_PATH = os.getenv("JELLYFIN_MUSIC_PATH", "/media/music")
+PLEX_MUSIC_PATH = os.getenv("PLEX_MUSIC_PATH", "/media/music")
 
 def setup_directories():
     """Ensure base directories exist."""
@@ -24,16 +25,24 @@ def clear_old_playlists():
             print(f"Could not remove old playlist {f}: {e}")
 
 def add_to_m3u_playlist(file_path, playlist_name):
-    """Appends the song's absolute Jellyfin path to an .m3u playlist file."""
+    """Appends the song's absolute path to .m3u playlist files for both Plex and Jellyfin."""
     safe_playlist_name = "".join(x for x in playlist_name if x.isalnum() or x in " -_")
-    m3u_path = os.path.join(PLAYLISTS_DIR, f"{safe_playlist_name}.m3u")
+    
+    # We create two M3U files if the internal mount paths differ, otherwise one is fine.
+    # For simplicity, we explicitly create a Jellyfin version and a Plex version.
+    
+    jellyfin_m3u_path = os.path.join(PLAYLISTS_DIR, f"{safe_playlist_name}_jellyfin.m3u")
+    plex_m3u_path = os.path.join(PLAYLISTS_DIR, f"{safe_playlist_name}_plex.m3u")
     
     try:
         jellyfin_absolute_path = file_path.replace(DOCKER_DOWNLOADS_PATH, JELLYFIN_MUSIC_PATH)
+        plex_absolute_path = file_path.replace(DOCKER_DOWNLOADS_PATH, PLEX_MUSIC_PATH)
         
-        # Append the absolute path to the .m3u file
-        with open(m3u_path, 'a', encoding='utf-8') as f:
+        with open(jellyfin_m3u_path, 'a', encoding='utf-8') as f:
             f.write(f"{jellyfin_absolute_path}\n")
+            
+        with open(plex_m3u_path, 'a', encoding='utf-8') as f:
+            f.write(f"{plex_absolute_path}\n")
             
     except Exception as e:
         print(f"Failed to add to M3U: {e}")
@@ -47,25 +56,27 @@ def remove_orphaned_songs(protected_jellyfin_paths=None):
 
     print("\nScanning for orphaned songs to free up storage...")
     
-    # 1. Gather all 'in-use' songs from the current M3U files
+    # Gather all 'in-use' songs from the current M3U files
     in_use_local_paths = set()
 
-    # 1. Protect the saved files from Jellyfin
     for jellyfin_path in protected_jellyfin_paths:
         local_path = jellyfin_path.replace(JELLYFIN_MUSIC_PATH, DOCKER_DOWNLOADS_PATH)
         in_use_local_paths.add(local_path)
 
-    # 2. Protect the current active M3U files
+    # Protect the current active M3U files
     m3u_files = glob.glob(os.path.join(PLAYLISTS_DIR, "*.m3u"))
     
     for m3u in m3u_files:
         try:
             with open(m3u, 'r', encoding='utf-8') as f:
                 for line in f:
-                    jellyfin_path = line.strip()
-                    if jellyfin_path:
-                        # Convert Jellyfin paths back to local Docker paths for comparison
-                        local_path = jellyfin_path.replace(JELLYFIN_MUSIC_PATH, DOCKER_DOWNLOADS_PATH)
+                    media_path = line.strip()
+                    if media_path:
+                        # Convert both Plex and Jellyfin paths back to local Docker paths
+                        if "_plex" in m3u:
+                            local_path = media_path.replace(PLEX_MUSIC_PATH, DOCKER_DOWNLOADS_PATH)
+                        else:
+                            local_path = media_path.replace(JELLYFIN_MUSIC_PATH, DOCKER_DOWNLOADS_PATH)
                         in_use_local_paths.add(local_path)
         except Exception as e:
             print(f"Error reading {m3u}: {e}")
