@@ -40,8 +40,9 @@ if __name__ == "__main__":
     # Run immediately on startup
     sync_job()
     
-    # Schedule to run every 30 minutes
-    schedule.every(30).minutes.do(sync_job)
+    # Schedule to run at 4am and 4pm every day
+    schedule.every().day.at("04:00").do(sync_job)
+    schedule.every().day.at("16:00").do(sync_job)
     
     while True:
         schedule.run_pending()
