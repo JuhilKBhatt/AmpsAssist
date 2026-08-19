@@ -4,7 +4,55 @@ import re
 from ytmusicapi import YTMusic
 from config import PLAYLIST_IDS, MAX_SONGS_PER_PLAYLIST
 
+import json
+
 AUTH_FILE = '/app/browser.json'
+COOKIES_FILE = '/app/cookies.txt'
+
+def sync_cookies_to_browser_json():
+    """Generates browser.json from cookies.txt so the user only needs one auth file."""
+    if not os.path.exists(COOKIES_FILE):
+        return
+        
+    # Only update if cookies.txt is newer than browser.json, or browser.json doesn't exist
+    if os.path.exists(AUTH_FILE) and os.path.getmtime(AUTH_FILE) >= os.path.getmtime(COOKIES_FILE):
+        return
+        
+    print("New cookies.txt detected! Converting to browser.json automatically...")
+    cookie_str = []
+    try:
+        with open(COOKIES_FILE, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line.startswith("#HttpOnly_"):
+                    line = line[10:]
+                elif line.startswith("#") or not line:
+                    continue
+                    
+                parts = line.split("\t")
+                if len(parts) >= 7:
+                    name = parts[5]
+                    value = parts[6]
+                    cookie_str.append(f"{name}={value}")
+                    
+        cookie_header = "; ".join(cookie_str)
+        
+        # ytmusicapi requires the word SAPISIDHASH in authorization to trigger Browser auth type
+        browser_json = {
+            "cookie": cookie_header,
+            "x-origin": "https://music.youtube.com",
+            "authorization": "SAPISIDHASH dummy",
+            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "accept-language": "en-US,en;q=0.9"
+        }
+        
+        with open(AUTH_FILE, "w", encoding="utf-8") as f:
+            json.dump(browser_json, f, indent=4)
+        print("Successfully generated browser.json from cookies.txt!")
+    except Exception as e:
+        print(f"Failed to parse cookies.txt: {e}")
+
+sync_cookies_to_browser_json()
 
 yt_unauth = YTMusic()
 

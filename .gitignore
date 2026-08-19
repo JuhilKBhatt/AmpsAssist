@@ -186,3 +186,4 @@ downloaded_songs.txt
 src/config.py
 oauth.json
 browser.json
+cookies.txt

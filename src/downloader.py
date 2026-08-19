@@ -77,6 +77,9 @@ def download_track(track):
         'no_warnings': True,
     }
 
+    if os.path.exists('/app/cookies.txt') and os.path.getsize('/app/cookies.txt') > 0:
+        ydl_opts['cookiefile'] = '/app/cookies.txt'
+
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(video_url, download=True)
