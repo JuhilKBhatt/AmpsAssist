@@ -21,9 +21,8 @@ def apply_metadata(file_path, track):
         audio.tags.add(TPE2(encoding=3, text=track['artist'])) # Jellyfin Album Artist
         audio.tags.add(TALB(encoding=3, text=track['album']))
         audio.save()
-        print(f"Tagged: {track['artist']} - {track['title']}")
     except Exception as e:
-        print(f"Failed to apply metadata to {file_path}: {e}")
+        pass
 
 def get_safe_filename(name):
     return "".join(x for x in str(name) if x.isalnum() or x in " -_") or "Unknown"
@@ -42,14 +41,12 @@ def find_existing_file(video_id):
 def download_track(track):
     """Downloads a single track and routes it to the correct Jellyfin folder."""
     
-    # Skip invalid tracks (like local YTM uploads that have no YouTube ID)
+    # Remove noisy print statements so they don't break the progress bar display.
     if not track.get('video_id'):
-        print(f"Skipped {track.get('title')}: No YouTube ID (likely a local upload or region blocked).")
         return
         
     existing_file = find_existing_file(track['video_id'])
     if existing_file:
-        # We already have the file! Just add its path to the M3U playlist.
         add_to_m3u_playlist(existing_file, track['playlist_name'])
         return
 
@@ -73,8 +70,12 @@ def download_track(track):
             {'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3', 'preferredquality': '192'},
             {'key': 'EmbedThumbnail'}
         ],
+        'extractor_args': {
+            'youtube': {'player_client': ['default', 'web_safari', 'web_embedded']}
+        },
         'quiet': True,
         'no_warnings': True,
+        'logger': YtLogger(),
     }
 
     if os.path.exists('/app/cookies.txt') and os.path.getsize('/app/cookies.txt') > 0:
@@ -91,11 +92,37 @@ def download_track(track):
                 
                 if os.path.exists(final_filename):
                     apply_metadata(final_filename, track)
-                    # Add the brand new file to the M3U playlist!
                     add_to_m3u_playlist(final_filename, track['playlist_name'])
     except Exception as e:
-        print(f"Failed to process {track['title']}: {e}")
+        pass
+
+from rich.console import Console
+from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn, TimeElapsedColumn
+
+console = Console()
+
+class YtLogger:
+    def debug(self, msg): pass
+    def warning(self, msg): pass
+    def error(self, msg): 
+        # Ignore normal errors like "Video unavailable" to avoid spam, but show critical ones
+        if "reloaded" in msg or "DRM" in msg or "bot" in msg or "Sign in" in msg:
+            console.print(f"[bold red]yt-dlp Error:[/bold red] {msg}")
 
 def process_downloads(tracks):
+    total = len(tracks)
+    completed = 0
+    
+    def track_wrapper(track):
+        nonlocal completed
+        try:
+            download_track(track)
+        except Exception:
+            pass
+        finally:
+            completed += 1
+            if completed % 10 == 0 or completed == total:
+                console.print(f"[cyan]Progress:[/cyan] {completed}/{total} tracks processed...")
+
     with ThreadPoolExecutor(max_workers=NUM_WORKERS) as executor:
-        executor.map(download_track, tracks)
+        executor.map(track_wrapper, tracks)

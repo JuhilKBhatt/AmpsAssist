@@ -67,10 +67,13 @@ def extract_playlist_id(url_or_id):
     match = re.search(r"[?&]list=([^&]+)", url_or_id)
     return match.group(1) if match else url_or_id
 
+from rich.console import Console
+console = Console()
+
 def get_auto_feed_playlists():
     auto_playlists = {}
     try:
-        print("Scanning YouTube Music Home screen for Feed playlists...")
+        console.print("[cyan]Scanning YouTube Music Home screen for Feed playlists...[/cyan]")
         home_shelves = yt.get_home(limit=10)
         
         for shelf in home_shelves:
@@ -84,26 +87,26 @@ def get_auto_feed_playlists():
                         # Memorize the actual title from the home screen
                         mix_title = item.get('title', 'Unknown Mix')
                         auto_playlists[pid] = mix_title
-                        print(f" -> Found: {mix_title}")
+                        console.print(f" [green]✓ Found:[/green] {mix_title}")
                         count += 1
                         
                     if count >= 6:
                         break
     except Exception as e:
-        print(f"Could not auto-fetch home feeds: {e}")
+        console.print(f"[red]Could not auto-fetch home feeds: {e}[/red]")
     return auto_playlists
 
 def get_library_playlists():
     lib_playlists = {}
     try:
-        print("Fetching saved playlists from your Library...")
+        console.print("[cyan]Fetching saved playlists from your Library...[/cyan]")
         playlists = yt.get_library_playlists(limit=50)
         for p in playlists:
             if 'playlistId' in p:
                 lib_playlists[p['playlistId']] = p.get('title', 'Unknown Playlist')
-                print(f" -> Found in Library: {p.get('title', 'Unknown Playlist')}")
+                console.print(f" [green]✓ Found in Library:[/green] {p.get('title', 'Unknown Playlist')}")
     except Exception as e:
-        print(f"Could not fetch library playlists: {e}")
+        console.print(f"[red]Could not fetch library playlists: {e}[/red]")
     return lib_playlists
 
 def get_playlist_tracks():
@@ -118,7 +121,7 @@ def get_playlist_tracks():
         playlists_map.update(get_auto_feed_playlists())
         playlists_map.update(get_library_playlists())
 
-    print(f"\nTotal unique playlists to process: {len(playlists_map)}\n")
+    console.print(f"\n[bold blue]Total unique playlists to process: {len(playlists_map)}[/bold blue]\n")
     
     for pid, known_title in playlists_map.items():
         try:
