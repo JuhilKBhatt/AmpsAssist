@@ -123,12 +123,22 @@ def get_playlist_tracks():
     
     # Use a dictionary to map IDs to their human-readable titles
     playlists_map = {}
+    
+    def normalize_pid(pid):
+        return pid[2:] if pid.startswith('VL') else pid
+
     for raw_pid in PLAYLIST_IDS:
-        playlists_map[extract_playlist_id(raw_pid)] = None
+        pid = extract_playlist_id(raw_pid)
+        playlists_map[normalize_pid(pid)] = None
         
     if os.path.exists(AUTH_FILE):
-        playlists_map.update(get_auto_feed_playlists())
-        playlists_map.update(get_library_playlists())
+        for pid, title in get_auto_feed_playlists().items():
+            playlists_map[normalize_pid(pid)] = title
+            
+        for pid, title in get_library_playlists().items():
+            norm_pid = normalize_pid(pid)
+            if norm_pid not in playlists_map or not playlists_map[norm_pid]:
+                playlists_map[norm_pid] = title
 
     console.print(f"\n[bold blue]Total unique playlists to process: {len(playlists_map)}[/bold blue]\n")
     
