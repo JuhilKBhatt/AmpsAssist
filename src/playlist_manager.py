@@ -2,7 +2,7 @@
 import os
 import re
 from ytmusicapi import YTMusic
-from config import PLAYLIST_IDS, MAX_SONGS_PER_PLAYLIST
+from config import PLAYLISTS_FILE, MAX_SONGS_PER_PLAYLIST
 
 import json
 
@@ -127,7 +127,24 @@ def get_playlist_tracks():
     def normalize_pid(pid):
         return pid[2:] if pid.startswith('VL') else pid
 
-    for raw_pid in PLAYLIST_IDS:
+    playlist_urls = []
+    if os.path.exists(PLAYLISTS_FILE):
+        try:
+            with open(PLAYLISTS_FILE, 'r') as f:
+                data = json.load(f)
+                if isinstance(data, dict):
+                    playlist_urls = list(data.values())
+                elif isinstance(data, list):
+                    # Fallback to list of strings or list of dicts
+                    if data and isinstance(data[0], dict):
+                        playlist_urls = [item.get('url') for item in data if 'url' in item]
+                    else:
+                        playlist_urls = data
+        except Exception as e:
+            from downloader import console
+            console.print(f"[red]Error loading {PLAYLISTS_FILE}: {e}[/red]")
+
+    for raw_pid in playlist_urls:
         pid = extract_playlist_id(raw_pid)
         playlists_map[normalize_pid(pid)] = None
         

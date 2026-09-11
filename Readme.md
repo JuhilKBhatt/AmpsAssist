@@ -33,7 +33,7 @@ The application automatically installs the following dependencies during the Doc
 
 ## ⚙️ Configuration Files
 
-Before running the container, you must set up the following three configuration files in the root of your project:
+Before running the container, you must set up the following configuration files in the root of your project:
 
 ### 1. `.env` (Environment Variables)
 Create a `.env` file to securely store your NAS credentials and Jellyfin API token. 
@@ -55,11 +55,22 @@ JELLYFIN_M3U_PATH=/data/music/Playlists
 
 Export your authenticated YouTube Music session headers to a file named **`browser.json`. This allows the** `ytmusicapi` to read your private, personalized shelves (like "My Supermix").
 
-### 3. `src/config.py`
+### 3. `playlists.json` (YouTube Playlists to Download)
+
+Create a `playlists.json` file in your SMB/downloads directory (e.g., `//192.168.1.230/music/playlists.json`). This file should contain a JSON dictionary mapping the playlist name to the YouTube URL. 
+Because this file lives in your SMB share, you can edit it at any time directly from your NAS without needing to restart the Docker container. It will automatically be picked up on the next sync cycle:
+
+```json
+{
+  "[Playlist Name]": "https://youtube.com/playlist?list=",
+  "[Playlist Name]": "https://youtube.com/playlist?list="
+}
+```
+
+### 4. `src/config.py`
 
 Open `src/config.py` to customize your download parameters:
 
-* `PLAYLIST_IDS`: Add specific YouTube or YouTube Music playlist URLs you want to hard-sync.
 * `MAX_SONGS_PER_PLAYLIST`: Limit the number of tracks pulled per mix (Default: 25).
 * `NUM_WORKERS`: Set the number of simultaneous download threads (Default: 5).
 

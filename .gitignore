@@ -187,3 +187,4 @@ src/config.py
 oauth.json
 browser.json
 cookies.txt
+playlists.json
