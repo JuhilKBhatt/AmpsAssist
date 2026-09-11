@@ -9,6 +9,7 @@ services:
     volumes:
       - jellyfin_music:/app/downloads
       - ./cookies.txt:/app/cookies.txt
+      - ./playlists.json:/app/playlists.json
     environment:
       - TZ=Australia/Sydney
       - PYTHONUNBUFFERED=1

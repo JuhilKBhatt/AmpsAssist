@@ -127,26 +127,31 @@ def get_playlist_tracks():
     def normalize_pid(pid):
         return pid[2:] if pid.startswith('VL') else pid
 
-    playlist_urls = []
+    user_playlists = {}
+    console.print(f"[dim]Looking for playlists file at: {PLAYLISTS_FILE}[/dim]")
     if os.path.exists(PLAYLISTS_FILE):
+        console.print("[green]✓ playlists.json found![/green]")
         try:
             with open(PLAYLISTS_FILE, 'r') as f:
                 data = json.load(f)
                 if isinstance(data, dict):
-                    playlist_urls = list(data.values())
+                    user_playlists = data
                 elif isinstance(data, list):
-                    # Fallback to list of strings or list of dicts
                     if data and isinstance(data[0], dict):
-                        playlist_urls = [item.get('url') for item in data if 'url' in item]
+                        user_playlists = {item.get('name', f"Playlist_{i}"): item.get('url') for i, item in enumerate(data) if 'url' in item}
                     else:
-                        playlist_urls = data
+                        user_playlists = {f"Playlist_{i}": url for i, url in enumerate(data)}
+            console.print(f"[green]✓ Loaded {len(user_playlists)} playlists from json.[/green]")
         except Exception as e:
-            from downloader import console
             console.print(f"[red]Error loading {PLAYLISTS_FILE}: {e}[/red]")
+    else:
+        console.print(f"[yellow]⚠ playlists.json not found at {PLAYLISTS_FILE}[/yellow]")
 
-    for raw_pid in playlist_urls:
+    for custom_title, raw_pid in user_playlists.items():
+        if not raw_pid: continue
         pid = extract_playlist_id(raw_pid)
-        playlists_map[normalize_pid(pid)] = None
+        # Only use custom title if they didn't just provide a generic fallback
+        playlists_map[normalize_pid(pid)] = custom_title if not custom_title.startswith("Playlist_") else None
         
     if os.path.exists(AUTH_FILE):
         for pid, title in get_auto_feed_playlists().items():

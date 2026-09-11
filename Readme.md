@@ -57,8 +57,8 @@ Export your authenticated YouTube Music session headers to a file named **`brows
 
 ### 3. `playlists.json` (YouTube Playlists to Download)
 
-Create a `playlists.json` file in your SMB/downloads directory (e.g., `//192.168.1.230/music/playlists.json`). This file should contain a JSON dictionary mapping the playlist name to the YouTube URL. 
-Because this file lives in your SMB share, you can edit it at any time directly from your NAS without needing to restart the Docker container. It will automatically be picked up on the next sync cycle:
+Create a `playlists.json` file in the root of your project directory (right next to `docker-compose.yml`). This file should contain a JSON dictionary mapping the playlist name to the YouTube URL. 
+Because this file is mapped as a volume, you can edit it at any time directly from your computer without needing to restart the Docker container. The script will automatically read your new changes on the next sync cycle:
 
 ```json
 {

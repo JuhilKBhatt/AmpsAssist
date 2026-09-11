@@ -13,12 +13,16 @@ def sync_job():
     console.print(f"[dim]yt-dlp version: {yt_dlp.version.__version__}[/dim]")
     setup_directories()
     
+    tracks = get_playlist_tracks()
+    if not tracks:
+        console.print("\n[bold red]No tracks found in any playlists![/bold red] Aborting sync to prevent deletion of existing files.")
+        return
+
+    console.print(f"\n[bold green]Found {len(tracks)} tracks across playlists.[/bold green] Processing...")
+    
     # Wipe the old .m3u files so we get a fresh mix generated
     console.print("[yellow]Clearing old playlist files...[/yellow]")
     clear_old_playlists()
-    
-    tracks = get_playlist_tracks()
-    console.print(f"\n[bold green]Found {len(tracks)} tracks across playlists.[/bold green] Processing...")
     
     # Download the tracks and generate the .m3u files
     process_downloads(tracks)
