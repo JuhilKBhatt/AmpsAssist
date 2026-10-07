@@ -1,14 +1,32 @@
 {
- "title": "Amps Assist",
- "description": " A python application that searches your YouTube Music to download and update your music library with the latest songs and albums from your favorite artists.",
- "language": ["Python"],
- "liveDemo": "",
- "images": [
-   ""
- ],
- "videoDemo": "",
- "Priority": 1,
- "type": "Solo",
- "version": "Alpha",
- "Visibilty": true
+  "title": "Amps Assist",
+  "description": "An automated, Dockerized media synchronization engine that bridges YouTube Music with Jellyfin and Plex media servers. Scrapes personalized mixes and library playlists, extracts high-fidelity audio with embedded ID3 metadata and cover art, builds server-compliant .m3u playlists, and triggers background server library refreshes across network storage.",
+  "techStack": {
+    "Frontend": [
+      "Rich Console"
+    ],
+    "Backend": [
+      "Python"
+    ],
+    "AI": [],
+    "DevSecOps": [
+      "Docker"
+    ]
+  },
+  "liveDemo": "",
+  "images": [],
+  "videoDemo": "",
+  "Priority": 1,
+  "category": "CLI",
+  "type": "Solo",
+  "version": "Alpha",
+  "versionNumber": "0.1.0",
+  "Highlights": [
+    "Automated YouTube Music synchronization pipeline parsing personalized algorithmic mixes ('Mixed for you', 'From the community') and custom library playlists via authenticated browser session emulation",
+    "Lossless and high-bitrate audio extraction engine powered by yt-dlp and FFmpeg with automated mutagen ID3 tagging, embedded album art, and artist/album directory hierarchy creation",
+    "Direct REST API orchestration with Jellyfin and Plex to trigger instantaneous background library refreshes, regenerate .m3u playlists, and sync live media without manual server rescans",
+    "Intelligent storage lifecycle manager detecting user-preserved playlists ('save' marker) while automatically purging orphaned .mp3 audio files and ghost directories",
+    "Containerized deployment built on Python 3.12, Docker, and Docker Compose with CIFS/SMB network volume mounting and scheduled background synchronization cycles"
+  ],
+  "Visibilty": true
 }
